@@ -1,0 +1,24 @@
+name: IndexNow ping
+on:
+  push:
+    branches: [main]
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Extract URLs from sitemap and ping IndexNow
+        run: |
+          SITEMAP_URL="https://bestmobiledetailingsandiego.com/sitemap.xml"
+          curl -s "$SITEMAP_URL" \
+            | grep -oP '(?<=<loc>)[^<]+' \
+            | jq -R . | jq -s . > urls.json
+          URLS=$(cat urls.json)
+          curl -X POST "https://api.indexnow.org/indexnow" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"host\": \"bestmobiledetailingsandiego.com\",
+              \"key\": \"e2a22664d13b0eaf43c9640b64b10446\",
+              \"keyLocation\": \"https://bestmobiledetailingsandiego.com/e2a22664d13b0eaf43c9640b64b10446.txt\",
+              \"urlList\": $URLS
+            }"
